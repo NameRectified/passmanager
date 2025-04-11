@@ -1,36 +1,39 @@
 import sys
 import pyperclip
 import argparse
-from core/generator import *
-from core/chcker import *
+from core.generator import *
+from core.checker import *
 
 class PasswordManager():
-    def __init__(self):
-        self.passwordChecker = PassChecker()
+    def __init__(self,password):
+        self.passwordChecker = PassChecker(password)
+        self.password  = password
+    # def isFoundInBreach(self):
 
-    
-    def isValid(self,password):
-        count = self.passwordChecker.getBreachCount(password)
+    #     return
+    def displayIfInBreach(self,count):
+        '''
+            If the password is found in a breach, display the number of times it was breached.
+        '''
+        return f"Password was found in a data breach {count} times."
+
+    def generateStrongPassword(self,length=10):
+        passwordGenerator = PassGenerator(length)
+        return passwordGenerator.generate()
+    def evaluatePassword(self):
+        count = self.passwordChecker.getBreachCount()
         if count:
-            display = f"Password was found in a data breach {count} times. Would you like to generate a strong password?\nIf you wish to generate, press 1 else press enter. "
-            print(display)
-            userResponse = input()
-            if userResponse=='':
-                return f"Please change your password as it is weak."
-            elif int(userResponse) == 1:
-                try:
-                    length = int(input("How long should the password be (min:10): "))
-                    if length<10:
-                        raise ValueError("Invalid length")
-                    passwordGenerator = PassGenerator(length)
-                    generatedPassword = passwordGenerator.generate()
-                    shouldCopy = int(input("Enter 1 if you wish to copy the password to clipboard: "))
-                    if shouldCopy == 1:
-                        pyperclip.copy(generatedPassword)
-                        print("Password successfully copied to clipboard.")
-                    return f"{generatedPassword} is the generated password."
-
-                except ValueError:
-                    return ("Please enter a valid password length.")
+            print(self.displayIfInBreach(count))
+            generatedPassword = self.generateStrongPassword()
+            pyperclip.copy(generatedPassword)
+            return f"We suggest you to use the following password: {generatedPassword}. It has been copied to you clipboard."
         else:
-            return f"{password} is a good password. You can use it."
+            pyperclip.copy(self.password)
+            return "This password not found in data breaches. Password has been copied to clipboard."
+
+
+if __name__=="__main__":
+    for arg in sys.argv[1:]:
+        pwManager = PasswordManager(arg)
+        outpt = pwManager.evaluatePassword()
+        print(outpt)
