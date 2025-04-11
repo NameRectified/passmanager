@@ -1,10 +1,10 @@
 import string
 import secrets
-
+import pyperclip
 class PassGenerator():
     characters = string.ascii_letters + string.digits + string.punctuation
     def __init__(self,length):
-        self.length = length
+        self.length = int(length)
     def generate(self):
         # length = getValidLength()
         while True:
@@ -13,4 +13,5 @@ class PassGenerator():
             and  any(c.isupper() for c in password)
             and sum(c.isdigit() for c in password)>=3):
                 break
-        return password
+        pyperclip.copy(password)
+        return f"We suggest the following password: {password}. It has been copied to you clipboard."
