@@ -9,6 +9,10 @@ class PasswordManager():
     def __init__(self,password):
         self.passwordChecker = PassChecker(password)
         self.password  = password
+    @classmethod
+    def cli_check(cls,args):
+        pwManager = cls(args.password)
+        print()
     def displayIfInBreach(self,count):
         '''
             If the password is found in a breach, display the number of times it was breached.
@@ -29,20 +33,21 @@ class PasswordManager():
             pyperclip.copy(self.password)
             return "This password not found in data breaches. Password has been copied to clipboard."
 
-
 def handle_check(args):
     pwManager = PasswordManager(args.password)
     outpt = pwManager.evaluatePassword()
     print(outpt)
-
 def handle_generate(args):
     passwordGenerator = PassGenerator(args.length)
     print(passwordGenerator.generate())
+
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser(prog="passmanager")
     subparsers = parser.add_subparsers(
         title="subcommands", help="password manager functions"
     )
+
     checkParser = subparsers.add_parser("check",help="Checks if the password has been found in any breach")
     checkParser.add_argument("password",help="The password to check for breaches")
     checkParser.set_defaults(func=handle_check)
@@ -50,6 +55,7 @@ if __name__=="__main__":
     generateParser = subparsers.add_parser("generate",help="Generates a strong password and copies to clipboard")
     generateParser.add_argument("-l","--length",default=10,help="Specify the length of the password.")
     generateParser.set_defaults(func=handle_generate)
+
     args = parser.parse_args()
     args.func(args)
     # for arg in sys.argv[1:]:
