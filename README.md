@@ -1,92 +1,87 @@
 # PassManager
 
-PassManager is a simple command-line tool written in Python for managing passwords.
-
-It allows you to:
-- Check if a password has been compromised in known data breaches.
-- Generate strong, secure passwords.
-- Automatically copy passwords to your clipboard for convenience.
-
----
-
-## Installation & Usage
-
-1. **Clone the repository and install dependencies**:
-
-```bash
-git clone https://github.com/NameRectified/passmanager.git
-cd passmanager
-pip install -r requirements.txt
-```
-
-Or manually install the required packages:
-
-```bash
-pip install pyperclip requests
-```
-
----
-
-## Commands
-
-### Check if a password has been breached
-
-```bash
-python passmanager.py check yourpassword123
-```
-
-Example output:
-
-```
-Password was found in a data breach 120 times.
-We suggest the following password: a!92JKlm%Xq1. It has been copied to your clipboard.
-```
-
-If the password was not found in any breach:
-
-```
-This password not found in data breaches. Password has been copied to clipboard.
-```
-
----
-
-### Generate a strong password
-
-```bash
-python passmanager.py generate -l 20
-```
-
-- `-l` or `--length`: Optional. Specifies the length of the generated password (default is 10).
-
-Example output:
-
-```
-We suggest the following password: aE$93kfL!xZm20!. It has been copied to your clipboard.
-```
-
----
-
-## How It Works
-
-- Utilizes the [Have I Been Pwned API](https://haveibeenpwned.com/API/v3#PwnedPasswords) to safely check if a password has been compromised, using a k-anonymity approach.
-- Uses Python's `secrets` and `string` modules to generate strong, random passwords.
-- Clipboard functionality is managed through `pyperclip`.
-
----
+A cross-platform CLI tool for passwords: breach checking via the HIBP API, secure generation, and strength scoring with specific suggestions.
 
 ## Requirements
 
-- Python 3.6 or higher
+- Python 3.10+
 - `requests`
 - `pyperclip`
 
+```bash
+pip install -r requirements.txt
+```
+
+## Commands
+
+### check
+
+Check if a password has been breached, get a strength score, and see specific suggestions for improvement.
+
+```bash
+passmanager check
+Password: ********
+
+Breach Status: Found in 2,266,543 data breaches
+Strength:       25/100 (weak)
+
+Suggestions:
+  • This password appears in 2,266,543 data breach(es) — never reuse it
+  • Add at least one uppercase letter
+  • Add at least one special character
+  • Avoid sequential characters like '123' or 'abc'
+  • Use a mix of upper/lowercase, digits, and special characters
+
+Suggested replacement: :_Y8$4Ur/v-&6FuN (copied to clipboard)
+```
+
+You can also pass the password directly as an argument:
+```bash
+passmanager check yourpassword
+```
+Omitting the argument prompts hidden-ly with `getpass`.
+
+### generate
+
+Generate a strong random password:
+
+```bash
+passmanager generate -l 16
+
+Generated:      G_j2*8TUP8?7
+Strength:       65/100 (strong)
+Copied to clipboard.
+```
+
+- `-l`, `--length`: Password length (default: 16)
+
+## Features
+
+- **Breach checking**: Uses the [Have I Been Pwned](https://haveibeenpwned.com/API/v3#PwnedPasswords) API with k-anonymity — never sends the full hash over the network.
+- **Password generation**: Uses `secrets` module. Excludes ambiguous characters (`0`, `O`, `1`, `l`, `I`, `|`). Guarantees at least one uppercase, one lowercase, three digits, and one special character.
+- **Strength scoring**: Heuristic analysis based on length, character diversity, sequential patterns, and repeated characters. _(ML-powered scoring coming in Phase 2.)_
+- **Specific suggestions**: Suggestions are derived from the actual password — not generic templates.
+
+## Project Structure
+
+```
+passmanager/
+├── passmanager.py    CLI entry point
+├── checker.py        Breach checking (HIBP API)
+├── generator.py      Password generation
+├── scorer.py         Strength analysis and suggestions
+├── config.py         Configuration constants
+├── tests/            pytest test suite
+├── requirements.txt
+└── .progress/        Session log and decisions
+```
+
+## Running Tests
+
+```bash
+pytest tests/
+```
 
 ## License
 
-This project is licensed under the MIT License. Feel free to use, modify, and distribute it as needed.
-
-
-## Security Note
-This script follows best practices by never sending the full password or full hash over the internet. However, for maximum security, avoid testing highly sensitive passwords on any third-party service.
-
-
+MIT
