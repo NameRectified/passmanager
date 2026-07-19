@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "passmanager"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "pyperclip",
+]
+
+[tool.setuptools]
+py-modules = ["passmanager", "checker", "generator", "scorer", "config"]
+
+[project.scripts]
+passmanager = "passmanager:main"
