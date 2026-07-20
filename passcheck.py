@@ -27,7 +27,7 @@ _RESET = "\033[0m"
 
 _BANNER = r"""
   +-----------------------------+
-  |      P A S S M A N A G E R    |
+  |       P A S S C H E C K       |
   |    Password Security Tool     |
   +-----------------------------+
 """
@@ -140,8 +140,8 @@ def interactive_mode() -> None:
 def create_parser() -> argparse.ArgumentParser:
     """Build the argument parser with check and generate subcommands."""
     parser = argparse.ArgumentParser(
-        prog="passmanager",
-        description="Password manager — check breaches, generate passwords, score strength.",
+        prog="passcheck",
+        description="Password security tool — check breaches, generate passwords, score strength.",
     )
     subparsers = parser.add_subparsers(
         title="commands",

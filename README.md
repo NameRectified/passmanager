@@ -1,6 +1,6 @@
-# PassManager
+# PassCheck
 
-A cross-platform CLI tool for passwords: breach checking via the HIBP API, secure generation, and strength scoring with specific suggestions.
+A cross-platform CLI tool for password security: breach checking via the HIBP API, secure generation, and ML-powered strength scoring with specific suggestions.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ pip install -r requirements.txt
 Check if a password has been breached, get a strength score, and see specific suggestions for improvement.
 
 ```bash
-passmanager check
+passcheck check
 Password: ********
 
 Breach Status: Found in 2,266,543 data breaches
@@ -37,7 +37,7 @@ Suggested replacement: :_Y8$4Ur/v-&6FuN (copied to clipboard)
 
 You can also pass the password directly as an argument:
 ```bash
-passmanager check yourpassword
+passcheck check yourpassword
 ```
 Omitting the argument prompts hidden-ly with `getpass`.
 
@@ -46,7 +46,7 @@ Omitting the argument prompts hidden-ly with `getpass`.
 Generate a strong random password:
 
 ```bash
-passmanager generate -l 16
+passcheck generate -l 16
 
 Generated:      G_j2*8TUP8?7
 Strength:       65/100 (strong)
@@ -65,8 +65,8 @@ Copied to clipboard.
 ## Project Structure
 
 ```
-passmanager/
-├── passmanager.py    CLI entry point
+passcheck/
+├── passcheck.py     CLI entry point
 ├── checker.py        Breach checking (HIBP API)
 ├── generator.py      Password generation
 ├── scorer.py         Strength analysis and suggestions
