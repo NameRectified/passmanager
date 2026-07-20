@@ -1,50 +1,46 @@
 import logging
 import string
+from pathlib import Path
+
+import joblib
 
 from config import MIN_LENGTH
+from training.features import FEATURE_NAMES, _count_sequential, extract_features
 
 logger = logging.getLogger(__name__)
 
+_MODEL: object | None = None
+_MODEL_PATH: Path = Path(__file__).parent / "models" / "strength_model.pkl"
 
-def _score_length(password: str) -> tuple[int, str | None]:
+
+def _load_model():
+    global _MODEL
+    if _MODEL is None and _MODEL_PATH.exists():
+        _MODEL = joblib.load(_MODEL_PATH)
+        logger.info("Loaded ML model from %s", _MODEL_PATH)
+    return _MODEL
+
+
+def _heuristic_issues(password: str) -> list[str]:
+    issues: list[str] = []
     length = len(password)
     if length < MIN_LENGTH:
-        return 0, "too_short"
-    if length < 12:
-        return 15, None
-    if length < 16:
-        return 25, None
-    return 35, None
+        issues.append("too_short")
+    if not any(c.islower() for c in password):
+        issues.append("no_lowercase")
+    if not any(c.isupper() for c in password):
+        issues.append("no_uppercase")
+    if not any(c.isdigit() for c in password):
+        issues.append("no_digit")
+    if not any(c in string.punctuation for c in password):
+        issues.append("no_special")
+    if _count_sequential(password) > 0:
+        issues.append("sequential_chars")
+    issues.extend(_detect_repeats(password))
+    return issues
 
 
-def _score_classes(password: str) -> tuple[int, list[str]]:
-    score = 0
-    issues: list[str] = []
-    checks = [
-        (any(c.islower() for c in password), "no_lowercase"),
-        (any(c.isupper() for c in password), "no_uppercase"),
-        (any(c.isdigit() for c in password), "no_digit"),
-        (any(c in string.punctuation for c in password), "no_special"),
-    ]
-    for present, issue in checks:
-        if present:
-            score += 10
-        else:
-            issues.append(issue)
-    return score, issues
-
-
-def _has_sequential(password: str) -> bool:
-    sequences = ["abcdefghijklmnopqrstuvwxyz", "0123456789"]
-    lowered = password.lower()
-    for seq in sequences:
-        for i in range(len(seq) - 2):
-            if seq[i : i + 3] in lowered:
-                return True
-    return False
-
-
-def _has_repeated(password: str) -> list[str]:
+def _detect_repeats(password: str) -> list[str]:
     seen: set[str] = set()
     issues: list[str] = []
     count = 1
@@ -69,7 +65,9 @@ def _has_repeated(password: str) -> list[str]:
 
 
 def analyze_password(password: str) -> dict:
-    """Analyze password strength and return a score, label, and list of issues.
+    """Analyze password strength using a trained ML model.
+
+    Falls back to heuristic scoring if the model is not available.
 
     Args:
         password: The password to analyze.
@@ -80,36 +78,29 @@ def analyze_password(password: str) -> dict:
             strength (str): "weak", "fair", "strong", or "very_strong".
             issues (list[str]): Machine-readable issue codes.
     """
-    length_score, length_issue = _score_length(password)
-    class_score, class_issues = _score_classes(password)
+    model = _load_model()
 
-    issues: list[str] = []
-    if length_issue:
-        issues.append(length_issue)
-    issues.extend(class_issues)
+    if model is not None:
+        features = extract_features(password)
+        row = [[features[name] for name in FEATURE_NAMES]]
+        raw_score = float(model.predict(row)[0])
+        score = max(0, min(100, round(raw_score)))
+    else:
+        score = 50
 
-    if _has_sequential(password):
-        issues.append("sequential_chars")
-    repeated_issues = _has_repeated(password)
-    issues.extend(repeated_issues)
+    issues = _heuristic_issues(password)
 
-    total = length_score + class_score
-    if "sequential_chars" in issues:
-        total = max(total - 10, 0)
-    for issue in repeated_issues:
-        total = max(total - 5, 0)
-
-    if total >= 80:
+    if score >= 80:
         strength = "very_strong"
-    elif total >= 60:
+    elif score >= 60:
         strength = "strong"
-    elif total >= 40:
+    elif score >= 40:
         strength = "fair"
     else:
         strength = "weak"
 
-    logger.debug("Password scored %d/100 (%s)", total, strength)
-    return {"score": total, "strength": strength, "issues": issues}
+    logger.debug("Password scored %d/100 (%s)", score, strength)
+    return {"score": score, "strength": strength, "issues": issues}
 
 
 def get_suggestions(

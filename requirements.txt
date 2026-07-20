@@ -1,4 +1,6 @@
 requests
 pyperclip
+scikit-learn
+joblib
 
 # Requires Python >= 3.10 for union type syntax (str | None)
