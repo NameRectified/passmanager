@@ -119,13 +119,15 @@ def interactive_mode() -> None:
         if choice == "1":
             password = getpass.getpass("Password: ")
             _run_check(password)
-            input("\nPress Enter to continue...")
+            if input("\nPress Enter to continue, or x to exit: ").lower() == "x":
+                break
 
         elif choice == "2":
             length_input = input(f"Length (default {config.DEFAULT_LENGTH}): ").strip()
             length = int(length_input) if length_input else config.DEFAULT_LENGTH
             _run_generate(length)
-            input("\nPress Enter to continue...")
+            if input("\nPress Enter to continue, or x to exit: ").lower() == "x":
+                break
 
         elif choice == "3":
             print("Goodbye.")
