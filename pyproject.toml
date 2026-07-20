@@ -12,6 +12,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
+packages = ["training"]
 py-modules = ["passmanager", "checker", "generator", "scorer", "config"]
 
 [project.scripts]

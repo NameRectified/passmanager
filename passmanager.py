@@ -26,13 +26,10 @@ _STRENGTH_LABELS = {
 _RESET = "\033[0m"
 
 _BANNER = r"""
-
-  ____                  __  __
- |  _ \ __ _ _ __ ___  |  \/  | __ _ _ __   __ _
- | |_) / _` | '_ ` _ \ | |\/| |/ _` | '_ \ / _` |
- |  __/ (_| | | | | | || |  | | (_| | | | | (_| |
- |_|   \__,_|_| |_| |_||_|  |_|\__,_|_| |_|\__, |
-                                            |___/
+  +-----------------------------+
+  |      P A S S M A N A G E R    |
+  |    Password Security Tool     |
+  +-----------------------------+
 """
 
 
@@ -111,7 +108,6 @@ def cmd_generate(args: argparse.Namespace) -> None:
 def interactive_mode() -> None:
     """Show a menu and run the selected action in a loop."""
     print(_BANNER)
-    print("  Password Security Tool")
     print()
 
     while True:

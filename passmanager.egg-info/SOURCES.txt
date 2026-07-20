@@ -14,4 +14,9 @@ passmanager.egg-info/requires.txt
 passmanager.egg-info/top_level.txt
 tests/test_checker.py
 tests/test_generator.py
+tests/test_ml_scorer.py
 tests/test_scorer.py
+training/__init__.py
+training/build_dataset.py
+training/features.py
+training/train.py
