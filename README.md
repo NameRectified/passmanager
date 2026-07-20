@@ -1,22 +1,28 @@
 # PassCheck
 
-A cross-platform CLI tool for password security: breach checking via the HIBP API, secure generation, and ML-powered strength scoring with specific suggestions.
+A cross-platform CLI tool for password security: breach checking via the HIBP API, secure password generation, and ML-powered strength scoring with specific suggestions.
 
-## Requirements
-
-- Python 3.10+
-- `requests`
-- `pyperclip`
+## Quick Install
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/NameRectified/passcheck.git
+cd passcheck
+pip install -e .
 ```
 
-## Commands
+Then run `passcheck` anywhere.
 
-### check
+## Usage
 
-Check if a password has been breached, get a strength score, and see specific suggestions for improvement.
+### Interactive mode
+
+```bash
+passcheck
+```
+
+Shows a menu where you can pick **Check** or **Generate** without remembering flags.
+
+### Check a password
 
 ```bash
 passcheck check
@@ -35,15 +41,13 @@ Suggestions:
 Suggested replacement: :_Y8$4Ur/v-&6FuN (copied to clipboard)
 ```
 
-You can also pass the password directly as an argument:
+You can also pass the password directly:
 ```bash
 passcheck check yourpassword
 ```
 Omitting the argument prompts hidden-ly with `getpass`.
 
-### generate
-
-Generate a strong random password:
+### Generate a password
 
 ```bash
 passcheck generate -l 16
@@ -59,21 +63,29 @@ Copied to clipboard.
 
 - **Breach checking**: Uses the [Have I Been Pwned](https://haveibeenpwned.com/API/v3#PwnedPasswords) API with k-anonymity — never sends the full hash over the network.
 - **Password generation**: Uses `secrets` module. Excludes ambiguous characters (`0`, `O`, `1`, `l`, `I`, `|`). Guarantees at least one uppercase, one lowercase, three digits, and one special character.
-- **Strength scoring**: Heuristic analysis based on length, character diversity, sequential patterns, and repeated characters. _(ML-powered scoring coming in Phase 2.)_
-- **Specific suggestions**: Suggestions are derived from the actual password — not generic templates.
+- **ML strength scoring**: RandomForest model trained on 3500 passwords. Scores 0–100 with specific suggestions for improvement.
+- **Specific suggestions**: Suggestions derived from the actual password — not generic templates.
+
+## Requirements
+
+- Python 3.10+
+- `requests`, `pyperclip`, `scikit-learn`, `joblib`
 
 ## Project Structure
 
 ```
 passcheck/
 ├── passcheck.py     CLI entry point
-├── checker.py        Breach checking (HIBP API)
-├── generator.py      Password generation
-├── scorer.py         Strength analysis and suggestions
-├── config.py         Configuration constants
-├── tests/            pytest test suite
+├── checker.py       Breach checking (HIBP API)
+├── generator.py     Password generation
+├── scorer.py        ML strength analysis + suggestions
+├── config.py        Configuration constants
+├── training/        ML pipeline (features, dataset, training)
+├── tests/           pytest test suite (32 tests)
+├── models/          Trained model (.pkl)
+├── .progress/       Session log and interview prep
 ├── requirements.txt
-└── .progress/        Session log and decisions
+└── pyproject.toml
 ```
 
 ## Running Tests
