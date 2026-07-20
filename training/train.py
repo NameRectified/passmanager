@@ -22,6 +22,17 @@ MODELS_DIR.mkdir(exist_ok=True)
 
 
 def breach_to_score(count: int) -> int:
+    """Convert a raw breach count to a 0–100 strength score.
+
+    Bounding the target this way makes training much easier than
+    predicting raw counts (which range from 0 to millions).
+
+    Args:
+        count: Number of times the password appeared in breaches.
+
+    Returns:
+        A score from 0–100 (higher = stronger).
+    """
     if count == 0:
         return 100
     if count < 100:
@@ -32,6 +43,15 @@ def breach_to_score(count: int) -> int:
 
 
 def load_data(path: Path) -> tuple[list[dict], list[int]]:
+    """Read the CSV dataset and return features + target scores.
+
+    Args:
+        path: Path to the CSV file with password,breach_count columns.
+
+    Returns:
+        X_raw: List of feature dicts (one per password).
+        y: List of target scores (0–100).
+    """
     X_raw: list[dict] = []
     y: list[int] = []
     with open(path) as f:
@@ -44,10 +64,15 @@ def load_data(path: Path) -> tuple[list[dict], list[int]]:
 
 
 def to_matrix(X_raw: list[dict]) -> list[list[float]]:
+    """Convert a list of feature dicts to a 2D list (rows × columns).
+
+    The column order matches FEATURE_NAMES so the model sees consistent input.
+    """
     return [[row[name] for name in FEATURE_NAMES] for row in X_raw]
 
 
 def main() -> None:
+    """Train a RandomForest model to predict password strength scores."""
     data_path = DATA_DIR / "passwords.csv"
     logger.info(f"Loading data from {data_path}...")
     X_raw, y = load_data(data_path)
@@ -59,13 +84,14 @@ def main() -> None:
 
     logger.info(f"Training on {len(X_train)} samples, testing on {len(X_test)}...")
     model = RandomForestRegressor(
-        n_estimators=100,
-        max_depth=15,
-        random_state=42,
-        n_jobs=-1,
+        n_estimators=100,  # 100 decision trees
+        max_depth=15,      # limit depth to avoid overfitting
+        random_state=42,   # reproducible results
+        n_jobs=-1,         # use all CPU cores
     )
     model.fit(X_train, y_train)
 
+    # Evaluate on held-out test set
     y_pred = model.predict(X_test)
     mae = mean_absolute_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
@@ -80,6 +106,7 @@ def main() -> None:
     for name, imp in feature_importances[:5]:
         logger.info(f"  {name}: {imp:.3f}")
 
+    # Save the trained model so scorer.py can load it at runtime
     model_path = MODELS_DIR / "strength_model.pkl"
     joblib.dump(model, model_path)
     logger.info(f"Model saved to {model_path}")
