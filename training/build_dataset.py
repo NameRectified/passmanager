@@ -14,7 +14,8 @@ DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 # Public dataset of common passwords from SecLists (CC0 / public domain).
-# We only use the first 1000 to keep HIBP API calls manageable (~1 minute).
+# We use the first 3000 to get a spread across breach count buckets.
+# The top 1000 are usually heavily breached; deeper entries get more varied counts.
 COMMON_PW_URL = "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/10k-most-common.txt"
 
 
@@ -97,8 +98,12 @@ def save_dataset(
 
 
 def main() -> None:
-    """Build the training dataset: common passwords + HIBP labels + generated strong passwords."""
-    common = download_common_passwords(COMMON_PW_URL, limit=1000)
+    """Build the training dataset: common passwords + HIBP labels + generated strong passwords.
+
+    Uses 3000 common passwords (to get varied breach counts) + 500 generated strong passwords.
+    Total ~3500 API calls at ~50ms each ≈ 3 minutes.
+    """
+    common = download_common_passwords(COMMON_PW_URL, limit=3000)
     results = fetch_breach_counts(common)
     strong = generate_strong_passwords(500)
     all_rows = results + strong
