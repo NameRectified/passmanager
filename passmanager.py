@@ -25,6 +25,16 @@ _STRENGTH_LABELS = {
 }
 _RESET = "\033[0m"
 
+_BANNER = r"""
+
+  ____                  __  __
+ |  _ \ __ _ _ __ ___  |  \/  | __ _ _ __   __ _
+ | |_) / _` | '_ ` _ \ | |\/| |/ _` | '_ \ / _` |
+ |  __/ (_| | | | | | || |  | | (_| | | | | (_| |
+ |_|   \__,_|_| |_| |_||_|  |_|\__,_|_| |_|\__, |
+                                            |___/
+"""
+
 
 def _color_strength(strength: str) -> str:
     """Wrap a strength label in ANSI color codes for terminal output."""
@@ -32,17 +42,15 @@ def _color_strength(strength: str) -> str:
     return f"{color}{strength}{_RESET}" if color else strength
 
 
-def cmd_check(args: argparse.Namespace) -> None:
-    """Check a password for breaches, score its strength, and show suggestions."""
-    password = args.password or getpass.getpass("Password: ")
-
+def _run_check(password: str) -> None:
+    """Run breach check + score + suggestions for a given password."""
     logger.info("Checking password...")
 
     try:
         breach_count = checker.check_breach(password)
     except ConnectionError as exc:
         print(f"Error: {exc}")
-        sys.exit(1)
+        return
 
     analysis = scorer.analyze_password(password)
     suggestions = scorer.get_suggestions(password, breach_count, analysis)
@@ -74,9 +82,9 @@ def cmd_check(args: argparse.Namespace) -> None:
         print("Password is safe. Copied to clipboard.")
 
 
-def cmd_generate(args: argparse.Namespace) -> None:
-    """Generate a strong random password, display its score, and copy to clipboard."""
-    password = generator.generate_password(length=args.length)
+def _run_generate(length: int) -> None:
+    """Generate a strong password and display its score."""
+    password = generator.generate_password(length=length)
     analysis = scorer.analyze_password(password)
     pyperclip.copy(password)
 
@@ -89,6 +97,48 @@ def cmd_generate(args: argparse.Namespace) -> None:
     print("Copied to clipboard.")
 
 
+def cmd_check(args: argparse.Namespace) -> None:
+    """CLI subcommand: check a password."""
+    password = args.password or getpass.getpass("Password: ")
+    _run_check(password)
+
+
+def cmd_generate(args: argparse.Namespace) -> None:
+    """CLI subcommand: generate a password."""
+    _run_generate(args.length)
+
+
+def interactive_mode() -> None:
+    """Show a menu and run the selected action in a loop."""
+    print(_BANNER)
+    print("  Password Security Tool")
+    print()
+
+    while True:
+        print("\n[1] Check a password")
+        print("[2] Generate a password")
+        print("[3] Exit")
+        choice = input("\nSelect an option (1-3): ").strip()
+
+        if choice == "1":
+            password = getpass.getpass("Password: ")
+            _run_check(password)
+            input("\nPress Enter to continue...")
+
+        elif choice == "2":
+            length_input = input(f"Length (default {config.DEFAULT_LENGTH}): ").strip()
+            length = int(length_input) if length_input else config.DEFAULT_LENGTH
+            _run_generate(length)
+            input("\nPress Enter to continue...")
+
+        elif choice == "3":
+            print("Goodbye.")
+            break
+
+        else:
+            print(f"Invalid option '{choice}'. Enter 1, 2, or 3.")
+
+
 def create_parser() -> argparse.ArgumentParser:
     """Build the argument parser with check and generate subcommands."""
     parser = argparse.ArgumentParser(
@@ -98,7 +148,6 @@ def create_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(
         title="commands",
         dest="command",
-        required=True,
     )
 
     check_parser = subparsers.add_parser(
@@ -129,15 +178,20 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    """Entry point: set up logging (only WARNING+ shown by default), parse args, dispatch."""
+    """Entry point: set up logging, parse args, dispatch or enter interactive mode."""
     logging.basicConfig(
         # Only show WARNING and above; change to logging.DEBUG for verbose output.
         level=logging.WARNING,
         format="%(levelname)s: %(message)s",
     )
+
     parser = create_parser()
     args = parser.parse_args()
-    args.func(args)
+
+    if args.command is None:
+        interactive_mode()
+    else:
+        args.func(args)
 
 
 if __name__ == "__main__":
